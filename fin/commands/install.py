@@ -55,7 +55,12 @@ def run(
 
     # 1. Show Dependency Tree Diagram (v1.2.0)
     from ..resolver.graph import DependencyGraph
-    graph = DependencyGraph(tx.sync_db, tx.aur_db, tx.local_db)
+    graph = DependencyGraph(
+        tx.sync_db,
+        tx.aur_db,
+        tx.local_db,
+        init_system=tx.config.init_system,
+    )
     for p in packages:
         try:
             graph.add_package(p)

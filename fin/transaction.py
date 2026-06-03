@@ -224,7 +224,12 @@ class InstallTransaction(Transaction):
         if not targets:
             return []
 
-        graph = DependencyGraph(self.sync_db, self.aur_db, self.local_db)
+        graph = DependencyGraph(
+            self.sync_db,
+            self.aur_db,
+            self.local_db,
+            init_system=self.config.init_system,
+        )
         for target in targets:
             if version:
                 graph.add_package(f"{target}={version}")
@@ -301,7 +306,12 @@ class InstallTransaction(Transaction):
 
             print()
             print_section("Install · 1/6 · Resolving dependencies")
-            graph = DependencyGraph(self.sync_db, self.aur_db, self.local_db)
+            graph = DependencyGraph(
+                self.sync_db,
+                self.aur_db,
+                self.local_db,
+                init_system=self.config.init_system,
+            )
 
             for target in targets:
                 graph.add_package(target)

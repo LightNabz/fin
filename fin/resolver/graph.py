@@ -65,12 +65,14 @@ class DependencyGraph:
         local_db: LocalDB,
         include_makedeps: bool = False,
         resolve_workers: int = 4,
+        init_system: str = "openrc",
     ):
         self.sync_db = sync_db
         self.aur_db  = aur_db
         self.local_db = local_db
         self.include_makedeps = include_makedeps
         self.resolve_workers = max(1, resolve_workers)
+        self.init_system = (init_system or "").strip().lower()
 
         # Node map: name -> Package
         self.nodes: Dict[str, Package] = {}
@@ -163,7 +165,7 @@ class DependencyGraph:
         required_by: Optional[str],
     ) -> Package:
         """Resolve a single package from sync DB, cache, or AUR."""
-        pkg = self.sync_db.get(name)
+        pkg = self.sync_db.get(name, init_system=self.init_system)
 
         # If we have an exact version requirement and SyncDB version doesn't match,
         # OR if not in SyncDB, check CACHE.

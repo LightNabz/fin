@@ -59,8 +59,8 @@ TMP_AUR       = f"{TMP_BASE}/aur"
 TMP_BUILD     = f"{TMP_BASE}/build"
 
 # ── Artix Repos ──────────────────────────────────────────────
-# Official Artix repos — init-agnostic + per-init variants
-ARCH_REPOS    = ["world", "world-openrc", "world-runit", "world-s6", "system", "lib32"]
+# Official Artix repos — init scripts are provided as suffixed world packages.
+ARCH_REPOS    = ["system", "world", "galaxy", "lib32"]
 ARCH_ARCH     = "x86_64"
 
 # ── Default Mirror ───────────────────────────────────────────
@@ -98,14 +98,12 @@ INIT_RUNIT    = "runit"
 INIT_S6       = "s6"
 SUPPORTED_INIT = [INIT_SYSTEMD, INIT_SYSVINIT, INIT_OPENRC, INIT_RUNIT, INIT_S6]
 
-# ── Init → repo suffix mapping ───────────────────────────────
-# Used to prioritize the right world-* repo for a given init system
-INIT_REPO_SUFFIX = {
-    INIT_OPENRC:   "world-openrc",
-    INIT_RUNIT:    "world-runit",
-    INIT_S6:       "world-s6",
-    INIT_SYSVINIT: "world",   # no dedicated suffix; use base world
-    INIT_SYSTEMD:  "world",
+# ── Init package suffixes ───────────────────────────────────────
+# Artix uses suffixes such as <pkg>-openrc, <pkg>-runit, and <pkg>-s6
+INIT_PKG_SUFFIX = {
+    INIT_OPENRC: "-openrc",
+    INIT_RUNIT:  "-runit",
+    INIT_S6:     "-s6",
 }
 
 # ── DB Freshness ─────────────────────────────────────────────

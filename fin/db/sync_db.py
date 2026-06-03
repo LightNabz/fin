@@ -16,6 +16,7 @@ from ..constants import (
     ARCH_REPOS, ARCH_ARCH,
     DEFAULT_MIRROR, MIRROR_DB_URL,
     DB_SYNC, DB_MAX_AGE_SECONDS,
+    INIT_PKG_SUFFIX,
 )
 from ..exceptions import DatabaseError, DatabaseStaleError
 
@@ -252,15 +253,24 @@ class SyncDB:
         if not self._index:
             self.load()
 
-    def get(self, name: str) -> Optional[Package]:
+    def get(self, name: str, init_system: str = None) -> Optional[Package]:
         """
         Get a package by exact name.
-        Also resolves virtual packages via provides map.
+        Also resolves init-specific suffix packages for OpenRC/runit/s6 systems,
+        then virtual packages via the provides map.
         """
         self._ensure_loaded()
+        normalized_init = (init_system or "").strip().lower()
+        if normalized_init in INIT_PKG_SUFFIX:
+            suffix = INIT_PKG_SUFFIX[normalized_init]
+            if not name.endswith(tuple(INIT_PKG_SUFFIX.values())):
+                variant = f"{name}{suffix}"
+                if variant in self._index:
+                    return self._index[variant]
+
         if name in self._index:
             return self._index[name]
-        # Try resolving as a virtual
+
         real = self._provides.get(name)
         if real:
             return self._index.get(real)

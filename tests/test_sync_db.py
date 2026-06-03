@@ -1,6 +1,7 @@
 import pytest
 import os
 from pathlib import Path
+from fin.db.models import Package
 from fin.db.sync_db import SyncDB
 
 @pytest.fixture
@@ -42,6 +43,26 @@ def test_syncdb_search(fake_syncdb, mocker):
     res = db.search("shell")
     if res:
         assert any(p.name == "bash" for p in res)
+
+
+def test_syncdb_init_suffix_variant(fake_syncdb):
+    var_db = fake_syncdb / "var/lib/sven/sync"
+    db = SyncDB(db_path=str(var_db))
+    db._index = {
+        "networkmanager-openrc": Package(
+            name="networkmanager-openrc",
+            version="1.0-1",
+            repo="world",
+            origin="official",
+            deps=["dbus"],
+        ),
+    }
+    db._provides = {}
+
+    pkg = db.get("networkmanager", init_system="openrc")
+    assert pkg is not None
+    assert pkg.name == "networkmanager-openrc"
+
 
 def test_syncdb_sync(fake_syncdb, mocker):
     var_db = fake_syncdb / "var/lib/sven/sync"
