@@ -29,6 +29,7 @@ from fin.config import get_config
 from fin.db.local_db import LocalDB
 from fin.db.sync_db import SyncDB
 from fin.db.models import Package
+from fin.exceptions import DatabaseError
 
 
 # ── Directories to scan ─────────────────────────────────────
@@ -169,7 +170,7 @@ def match_packages(sync_db: SyncDB, local_db: LocalDB,
     return candidates
 
 
-def adopt(min_score: int = 5, dry_run: bool = False, assume_yes: bool = False):
+def adopt(min_score: int = 5, dry_run: bool = False, assume_yes: bool = False, sync_before: bool = False):
     config = get_config()
     local_db = LocalDB()
     sync_db = SyncDB()
@@ -192,11 +193,25 @@ def adopt(min_score: int = 5, dry_run: bool = False, assume_yes: bool = False):
     print(f"         Found {len(system_includes)} include directories")
 
     # Phase 2: Match
-    print("\n   [2/3] Matching against SyncDB...")
-    candidates = match_packages(sync_db, local_db,
-                                system_libs, system_bins,
-                                system_pcs, system_includes,
-                                min_score=min_score)
+    if sync_before:
+        print("\n   [2/3] Refreshing sync database cache...")
+        sync_results = sync_db.sync()
+        if not any(sync_results.values()):
+            print("   ✗ Failed to refresh sync databases.")
+            print("   Please run: fin sync")
+            sys.exit(1)
+        print("\n   [2/3] Matching against SyncDB...")
+    else:
+        print("\n   [2/3] Matching against SyncDB...")
+
+    try:
+        candidates = match_packages(sync_db, local_db,
+                                    system_libs, system_bins,
+                                    system_pcs, system_includes,
+                                    min_score=min_score)
+    except DatabaseError as exc:
+        print(f"   ✗ {exc}")
+        sys.exit(1)
 
     if not candidates:
         print("   ✓ No new packages to adopt. LocalDB is comprehensive.")
@@ -253,8 +268,9 @@ def main():
     parser.add_argument("--min-score", type=int, default=5, help="Minimum confidence score to adopt (default: 5)")
     parser.add_argument("--dry-run", action="store_true", help="Preview adoption without writing LocalDB")
     parser.add_argument("-y", "--yes", action="store_true", help="Do not prompt for confirmation")
+    parser.add_argument("--sync", action="store_true", help="Download sync DBs before matching")
     args = parser.parse_args()
-    adopt(min_score=args.min_score, dry_run=args.dry_run, assume_yes=args.yes)
+    adopt(min_score=args.min_score, dry_run=args.dry_run, assume_yes=args.yes, sync_before=args.sync)
 
 
 if __name__ == "__main__":
