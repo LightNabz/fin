@@ -1,0 +1,255 @@
+# ============================================================
+#  fin — Selachii Package Manager
+#  Selachii Project © 2026 — GPL v3
+#  config.py — reads and validates /etc/fin/fin.conf
+# ============================================================
+
+import configparser
+import os
+from pathlib import Path
+
+from .constants import (
+    CONFIG_FILE, DEFAULT_ROOT,
+    CACHE_BASE, DB_BASE, LOG_MAIN,
+    INIT_SYSVINIT, SUPPORTED_INIT, INIT_OPENRC,
+    PARALLEL_DOWNLOADS,
+)
+from .exceptions import InvalidConfigError
+
+
+def detect_runtime_init_system() -> str:
+    """
+    Best-effort runtime init detection.
+    Prefers systemd when PID 1/runtime socket indicates it is active.
+    """
+    if Path("/run/systemd/private").exists():
+        return "systemd"
+    try:
+        comm = Path("/proc/1/comm").read_text().strip().lower()
+        if "systemd" in comm:
+            return "systemd"
+    except OSError:
+        pass
+    return INIT_OPENRC
+
+
+# ── Defaults ─────────────────────────────────────────────────
+
+DEFAULTS = {
+    "general": {
+        "install_root"      : DEFAULT_ROOT,
+        "cache_dir"         : CACHE_BASE,
+        "db_path"           : DB_BASE,
+        "log_file"          : LOG_MAIN,
+        "init_system"       : INIT_OPENRC,
+    },
+    "repos": {
+        "use_official"      : "true",
+        "use_aur"           : "true",
+        "aur_review"        : "prompt",    # always | prompt | never
+    },
+    "build": {
+        "build_dir"         : "/tmp/fin/aur",
+        "keep_cache"        : "true",
+        "parallel_jobs"     : "4",
+    },
+    "download": {
+        "parallel_downloads": str(PARALLEL_DOWNLOADS),
+        "mirror"            : "auto",
+    },
+    "upgrade": {
+        "ignored_packages"  : "",
+        "held_packages"     : "",
+    },
+    "safety": {
+        "protected_packages": (
+            # LFS Core Toolchain & System
+            "glibc linux-api-headers filesystem gcc binutils glibc-locales bash coreutils "
+            "linux-firmware make patch m4 perl python gawk grep sed findutils tar "
+            "gzip bzip2 xz zstd util-linux procps-ng e2fsprogs shadow less "
+            # Critical BLFS Libraries
+            "zlib openssl libffi pcre2 expat libcap libxml2 ncurses readline "
+            "sqlite pkgconf ca-certificates curl wget"
+        ),
+    },
+}
+
+
+# ── Config class ─────────────────────────────────────────────
+
+class Config:
+    """
+    Reads /etc/fin/fin.conf and exposes typed config values.
+    Falls back to DEFAULTS for any missing key.
+    Can be overridden at runtime (e.g. --root flag).
+    """
+
+    def __init__(self, config_path: str = CONFIG_FILE):
+        self._path   = config_path
+        self._parser = configparser.ConfigParser()
+        self._created_on_load = False
+        self._load()
+
+    # ── Load ─────────────────────────────────────────────────
+
+    def _load(self):
+        # Apply defaults first
+        for section, values in DEFAULTS.items():
+            self._parser[section] = values
+
+        # Auto-tune defaults on first run
+        detected_init = detect_runtime_init_system()
+        self._parser["general"]["init_system"] = detected_init
+        cpu = os.cpu_count() or 1
+        # Use more aggressive parallelism: up to CPU count, min 4, max 16
+        self._parser["download"]["parallel_downloads"] = str(max(4, min(16, cpu)))
+
+        # Read actual config if it exists
+        if Path(self._path).exists():
+            self._parser.read(self._path)
+        else:
+            # First run: create config file with detected defaults.
+            path = Path(self._path)
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with open(path, "w") as f:
+                    self._parser.write(f)
+                self._created_on_load = True
+            except OSError:
+                pass
+
+        self._validate()
+
+    # ── Validate ─────────────────────────────────────────────
+
+    def _validate(self):
+        init = self.init_system
+        if init not in SUPPORTED_INIT:
+            raise InvalidConfigError("init_system", init)
+
+        aur_review = self.aur_review
+        if aur_review not in ("always", "prompt", "never"):
+            raise InvalidConfigError("aur_review", aur_review)
+
+    # ── General ──────────────────────────────────────────────
+
+    @property
+    def install_root(self) -> str:
+        return self._parser.get("general", "install_root")
+
+    @install_root.setter
+    def install_root(self, value: str):
+        self._parser["general"]["install_root"] = value
+
+    @property
+    def cache_dir(self) -> str:
+        return self._parser.get("general", "cache_dir")
+
+    @property
+    def db_path(self) -> str:
+        return self._parser.get("general", "db_path")
+
+    @property
+    def log_file(self) -> str:
+        return self._parser.get("general", "log_file")
+
+    @property
+    def init_system(self) -> str:
+        configured = self._parser.get("general", "init_system").lower()
+        runtime = detect_runtime_init_system()
+        # Runtime systemd detection takes precedence to avoid false sysvinit filtering.
+        if runtime == "systemd":
+            return "systemd"
+        return configured
+
+    # ── Repos ────────────────────────────────────────────────
+
+    @property
+    def use_official(self) -> bool:
+        return self._parser.getboolean("repos", "use_official")
+
+    @property
+    def use_aur(self) -> bool:
+        return self._parser.getboolean("repos", "use_aur")
+
+    @property
+    def aur_review(self) -> str:
+        return self._parser.get("repos", "aur_review").lower()
+
+    # ── Build ────────────────────────────────────────────────
+
+    @property
+    def build_dir(self) -> str:
+        return self._parser.get("build", "build_dir")
+
+    @property
+    def keep_cache(self) -> bool:
+        return self._parser.getboolean("build", "keep_cache")
+
+    @property
+    def parallel_jobs(self) -> int:
+        return self._parser.getint("build", "parallel_jobs")
+
+    # ── Download ─────────────────────────────────────────────
+
+    @property
+    def parallel_downloads(self) -> int:
+        return self._parser.getint("download", "parallel_downloads")
+
+    @property
+    def mirror(self) -> str:
+        return self._parser.get("download", "mirror")
+
+    # ── Upgrade ──────────────────────────────────────────────
+
+    @property
+    def ignored_packages(self) -> list[str]:
+        raw = self._parser.get("upgrade", "ignored_packages")
+        return [p.strip() for p in raw.split() if p.strip()]
+
+    @property
+    def held_packages(self) -> list[str]:
+        raw = self._parser.get("upgrade", "held_packages")
+        return [p.strip() for p in raw.split() if p.strip()]
+
+    # ── Safety ───────────────────────────────────────────────
+
+    @property
+    def protected_packages(self) -> list[str]:
+        raw = self._parser.get("safety", "protected_packages", fallback="")
+        return [p.strip() for p in raw.split() if p.strip()]
+
+    # ── Derived paths (respect install_root) ─────────────────
+
+    def rooted(self, path: str) -> str:
+        """Prepend install_root to a path."""
+        root = self.install_root.rstrip("/")
+        return f"{root}{path}" if root != "/" else path
+
+    @property
+    def path(self) -> str:
+        return self._path
+
+    @property
+    def was_created(self) -> bool:
+        return self._created_on_load
+
+    # ── Debug ────────────────────────────────────────────────
+
+    def __repr__(self):
+        return (
+            f"<Config init={self.init_system} "
+            f"root={self.install_root} "
+            f"aur={self.use_aur}>"
+        )
+
+
+# ── Singleton ────────────────────────────────────────────────
+
+_config: Config | None = None
+
+def get_config(path: str = CONFIG_FILE) -> Config:
+    global _config
+    if _config is None:
+        _config = Config(path)
+    return _config

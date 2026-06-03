@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "fin"
+version = "1.0.0"
+description = "fin — package manager for Selachii OpenRC LFS"
+license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+    "zstandard>=0.21",
+    "python-gnupg>=0.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6",
+    "pytest>=7",
+]
+
+[project.scripts]
+fin = "fin.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fin*"]
