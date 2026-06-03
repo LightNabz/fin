@@ -1,6 +1,6 @@
 # fin
 
-**fin** is the package manager for [Selachii](https://github.com/YOUR_USERNAME/selachii) — an OpenRC-based Linux From Scratch distribution.
+**fin** is the package manager for [Selachii](https://github.com/LightNabz/selachii) — an OpenRC-based Linux From Scratch distribution.
 
 fin pulls packages from **Artix Linux** official repositories and the Arch AUR, giving you access to a vast software ecosystem while keeping your system completely free of systemd.
 
@@ -56,7 +56,7 @@ PYTHONPATH=. python3 scripts/adopt_blfs.py --min-score 8 --dry-run
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/fin.git
+git clone https://github.com/LightNabz/fin.git
 cd fin
 sudo bash install.sh
 ```

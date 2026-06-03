@@ -2,7 +2,7 @@
 #
 # pulseaudio - PulseAudio Sound System
 #
-# Seven OS init script shipped by Sven
+# Seven OS init script shipped by fin
 
 DAEMON="/usr/bin/pulseaudio"
 

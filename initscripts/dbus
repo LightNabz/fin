@@ -2,7 +2,7 @@
 #
 # dbus - D-Bus system message bus
 #
-# Seven OS init script shipped by Sven
+# Seven OS init script shipped by fin
 
 DAEMON="/usr/bin/dbus-daemon"
 PIDFILE="/run/dbus/pid"

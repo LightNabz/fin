@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/ui/output.py — Output formatting and styling
+#  fin/ui/output.py — Output formatting and styling
 # ============================================================
 import os
 

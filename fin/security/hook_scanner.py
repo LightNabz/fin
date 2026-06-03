@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/security/hook_scanner.py
+#  fin/security/hook_scanner.py
 # ============================================================
 import re
 from pathlib import Path

@@ -7,7 +7,7 @@
  * Returns -1 if a < b, 0 if a == b, 1 if a > b.
  * This will replace the slow Regex/Python split in DependencyGraph.
  */
-int sven_vercmp(const char *a, const char *b) {
+int fin_vercmp(const char *a, const char *b) {
     if (strcmp(a, b) == 0) return 0;
     
     const char *p1 = a;

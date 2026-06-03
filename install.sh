@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-#  Sven — Selachii Installer
+#  Fin — Selachii Installer
 #  Selachii Project © 2026 — GPL v3
 #  Run from the repository root: sudo bash install.sh
 # ============================================================
@@ -9,16 +9,16 @@ set -e
 
 VERBOSE=0
 NO_SYNC=0
-SVEN_VERSION="latest"
+FIN_VERSION="latest"
 SKIP_ADOPT=0
 while [ $# -gt 0 ]; do
   case "$1" in
     -v|--verbose) VERBOSE=1; shift ;;
     --no-sync|--quick) NO_SYNC=1; shift ;;
     --skip-adopt) SKIP_ADOPT=1; shift ;;
-    --sven-version)
-      [ -n "${2:-}" ] || { echo "--sven-version requires a value" >&2; exit 1; }
-      SVEN_VERSION="$2"
+    --fin-version)
+      [ -n "${2:-}" ] || { echo "--fin-version requires a value" >&2; exit 1; }
+      FIN_VERSION="$2"
       shift 2
       ;;
     -h|--help)
@@ -26,15 +26,15 @@ while [ $# -gt 0 ]; do
 Usage: sudo bash install.sh [options]
 
   -v, --verbose        Trace every command, environment summary, and timings
-  --no-sync, --quick   Skip the final "sven sync" (faster; run sync when you want)
+  --no-sync, --quick   Skip the final "fin sync" (faster; run sync when you want)
   --skip-adopt         Skip LFS/BLFS adoption scripts
-  --sven-version VER   Install a specific Sven release (example: 1.2.0)
+  --fin-version VER    Install a specific fin release (example: 1.2.0)
   -h, --help           Show this help
 
 Examples:
   sudo bash install.sh
   sudo bash install.sh --quick
-  sudo bash install.sh --sven-version 1.2.0
+  sudo bash install.sh --fin-version 1.2.0
   sudo bash install.sh -v
 EOF
       exit 0
@@ -54,7 +54,7 @@ DIM='\033[2m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-info()  { echo -e "${CYAN}[sven]${NC} $1"; }
+info()  { echo -e "${CYAN}[fin]${NC} $1"; }
 ok()    { echo -e "${GREEN}[  ✓ ]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[ !! ]${NC} $1"; }
 fail()  { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
@@ -108,8 +108,8 @@ fi
 
 if [ "$VERBOSE" -eq 0 ]; then
   echo ""
-  echo -e "  ${BOLD}Sven installer${NC} — Selachii package manager"
-  echo -e "  ${DIM}This script checks your tools, prepares system paths, installs the sven binary,${NC}"
+  echo -e "  ${BOLD}fin installer${NC} — Selachii package manager"
+  echo -e "  ${DIM}This script checks your tools, prepares system paths, installs the fin binary,${NC}"
   echo -e "  ${DIM}runs adoption helpers if they are present, then optionally refreshes databases.${NC}"
   echo ""
 fi
@@ -145,7 +145,7 @@ done
 if [ ${#MISSING[@]} -gt 0 ]; then
   echo ""
   for t in "${MISSING[@]}"; do
-    warn "$t is missing (required for Sven on Selachii / LFS)."
+    warn "$t is missing (required for fin on Selachii / LFS)."
   done
   echo ""
   fail "Install the missing tools from your LFS/BLFS build, then run this script again."
@@ -179,8 +179,8 @@ vtime mkdir -p \
   /var/cache/fin/pkgs \
   /var/log/fin
 
-if [ -f "$REPO_ROOT/sven/ui/fin-cnf.sh" ]; then
-  cp "$REPO_ROOT/sven/ui/fin-cnf.sh" /etc/fin/fin-cnf.sh
+if [ -f "$REPO_ROOT/fin/ui/fin-cnf.sh" ]; then
+  cp "$REPO_ROOT/fin/ui/fin-cnf.sh" /etc/fin/fin-cnf.sh
 fi
 
 ok "Layout under /etc/fin, /var/lib/fin, /var/cache/fin is ready."
@@ -224,21 +224,21 @@ protected_packages = glibc linux-api-headers filesystem gcc binutils glibc-local
 EOF
 ok "Wrote /etc/fin/fin.conf (detected init_system=${INIT_SYSTEM_DETECTED})."
 
-step 3 "Installing the sven binary"
+step 3 "Installing the fin binary"
 CP_FLAGS=()
 [ "$VERBOSE" -eq 1 ] && CP_FLAGS=(-v)
-BINARY_DST="/usr/bin/sven"
+BINARY_DST="/usr/bin/fin"
 
-if [ -f "$REPO_ROOT/dist/sven" ]; then
-  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/dist/sven" "$BINARY_DST"
-elif [ -f "$REPO_ROOT/sven" ]; then
-  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/sven" "$BINARY_DST"
-elif [ -f "$REPO_ROOT/run_sven.py" ]; then
-  info "No built binary found — creating source-tree launcher from run_sven.py"
+if [ -f "$REPO_ROOT/dist/fin" ]; then
+  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/dist/fin" "$BINARY_DST"
+elif [ -f "$REPO_ROOT/fin" ]; then
+  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/fin" "$BINARY_DST"
+elif [ -f "$REPO_ROOT/run_fin.py" ]; then
+  info "No built binary found — creating source-tree launcher from run_fin.py"
   cat > "$BINARY_DST" <<EOF
 #!/bin/bash
 export PYTHONPATH="$REPO_ROOT"
-exec python3 "$REPO_ROOT/run_sven.py" "\$@"
+exec python3 "$REPO_ROOT/run_fin.py" "\$@"
 EOF
 else
   TMP_BIN="$(mktemp /tmp/fin-bin.XXXXXX)"
@@ -247,21 +247,21 @@ else
   }
   trap cleanup_tmp_bin EXIT
 
-  if [ "$SVEN_VERSION" = "latest" ]; then
+  if [ "$FIN_VERSION" = "latest" ]; then
     info "No local binary in dist/ — downloading latest release…"
-    LATEST_URL="https://github.com/HaroldMth/sven/releases/latest/download/sven-linux-x86_64"
+    LATEST_URL="https://github.com/LightNabz/fin/releases/latest/download/fin-linux-x86_64"
   else
-    info "No local binary in dist/ — downloading Sven v$SVEN_VERSION…"
-    LATEST_URL="https://github.com/HaroldMth/sven/releases/download/v${SVEN_VERSION}/sven-linux-x86_64"
+    info "No local binary in dist/ — downloading fin v$FIN_VERSION…"
+    LATEST_URL="https://github.com/LightNabz/fin/releases/download/v${FIN_VERSION}/fin-linux-x86_64"
   fi
 
   if command -v wget &>/dev/null; then
     if ! vtime wget -q --show-progress "$LATEST_URL" -O "$TMP_BIN"; then
-      fail "Failed to download Sven binary from: $LATEST_URL (wget error)."
+      fail "Failed to download fin binary from: $LATEST_URL (wget error)."
     fi
   elif command -v curl &>/dev/null; then
     if ! vtime curl -fL --progress-bar "$LATEST_URL" -o "$TMP_BIN"; then
-      fail "Failed to download Sven binary from: $LATEST_URL (curl error)."
+      fail "Failed to download fin binary from: $LATEST_URL (curl error)."
     fi
   else
     fail "Need wget or curl to download the binary."
@@ -301,16 +301,16 @@ fi
 
 step 5 "Finishing up"
 if [ "$NO_SYNC" -eq 1 ]; then
-  info "Skipping database sync (--no-sync). Run ${BOLD}sven sync${NC} when you are online."
+  info "Skipping database sync (--no-sync). Run ${BOLD}fin sync${NC} when you are online."
 else
-  info "Refreshing package databases (sven sync)…"
-  vtime sven sync || warn "Sync failed — check the network and run: sven sync"
+  info "Refreshing package databases (fin sync)…"
+  vtime fin sync || warn "Sync failed — check the network and run: fin sync"
 fi
 
 echo ""
-ok "Sven is installed."
+ok "fin is installed."
 if [ "$VERBOSE" -eq 0 ]; then
-  echo -e "  ${DIM}Try:${NC} ${BOLD}sven search vim${NC}  ${DIM}·${NC}  ${BOLD}sven list --explicit${NC}  ${DIM}·${NC}  ${BOLD}sven path <pkg>${NC}"
+  echo -e "  ${DIM}Try:${NC} ${BOLD}fin search vim${NC}  ${DIM}·${NC}  ${BOLD}fin list --explicit${NC}  ${DIM}·${NC}  ${BOLD}fin path <pkg>${NC}"
   echo -e "  ${DIM}For shell integration:${NC} ${BOLD}source /etc/fin/fin-cnf.sh${NC}"
   echo ""
 fi

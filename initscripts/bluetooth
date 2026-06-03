@@ -2,7 +2,7 @@
 #
 # bluetooth - Bluetooth daemon
 #
-# Seven OS init script shipped by Sven
+# Seven OS init script shipped by fin
 
 DAEMON="/usr/libexec/bluetooth/bluetoothd"
 

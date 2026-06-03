@@ -10,7 +10,7 @@
  *
  * Returns 1 if a match is found, 0 otherwise.
  */
-int sven_match_path(const char *pattern, const char **files, int num_files) {
+int fin_match_path(const char *pattern, const char **files, int num_files) {
     if (!pattern || !files || num_files <= 0) return 0;
     
     // fnmatch() is a POSIX standard glob matcher.

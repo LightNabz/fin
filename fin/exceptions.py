@@ -7,14 +7,14 @@
 
 # ── Base ─────────────────────────────────────────────────────
 
-class SvenError(Exception):
+class FinError(Exception):
     """Base exception for all fin errors."""
     pass
 
 
 # ── Database ─────────────────────────────────────────────────
 
-class DatabaseError(SvenError):
+class DatabaseError(FinError):
     """Generic database error."""
     pass
 
@@ -33,7 +33,7 @@ class DatabaseLockError(DatabaseError):
 
 # ── Package ──────────────────────────────────────────────────
 
-class PackageError(SvenError):
+class PackageError(FinError):
     """Generic package error."""
     pass
 
@@ -59,7 +59,7 @@ class PackageNotInstalledError(PackageError):
 
 # ── Dependency ───────────────────────────────────────────────
 
-class DependencyError(SvenError):
+class DependencyError(FinError):
     """Generic dependency error."""
     pass
 
@@ -99,7 +99,7 @@ class VersionConstraintError(DependencyError):
 
 # ── Download ─────────────────────────────────────────────────
 
-class DownloadError(SvenError):
+class DownloadError(FinError):
     """Generic download error."""
     pass
 
@@ -133,7 +133,7 @@ class SignatureError(DownloadError):
 
 # ── AUR / Build ──────────────────────────────────────────────
 
-class AURError(SvenError):
+class AURError(FinError):
     """Generic AUR error."""
     pass
 
@@ -170,7 +170,7 @@ class RootBuildError(AURError):
 
 # ── Install ──────────────────────────────────────────────────
 
-class InstallError(SvenError):
+class InstallError(FinError):
     """Generic install error."""
     pass
 
@@ -204,7 +204,7 @@ class ExtractionError(InstallError):
 
 # ── Hooks ────────────────────────────────────────────────────
 
-class HookError(SvenError):
+class HookError(FinError):
     """Generic hook error."""
     pass
 
@@ -226,7 +226,7 @@ class HookTranslationError(HookError):
 
 # ── Rollback ─────────────────────────────────────────────────
 
-class RollbackError(SvenError):
+class RollbackError(FinError):
     """Generic rollback error."""
     pass
 
@@ -244,7 +244,7 @@ class RollbackFailedError(RollbackError):
 
 # ── Config ───────────────────────────────────────────────────
 
-class ConfigError(SvenError):
+class ConfigError(FinError):
     """Generic config error."""
     pass
 
@@ -264,14 +264,14 @@ class InvalidConfigError(ConfigError):
 
 # ── Migration ────────────────────────────────────────────────
 
-class MigrationError(SvenError):
+class MigrationError(FinError):
     """Init system migration error."""
     pass
 
 
 # ── Hardening ────────────────────────────────────────────────
 
-class FileConflictError(SvenError):
+class FileConflictError(FinError):
     """A file is already owned by another package."""
     def __init__(self, filename: str, owner_pkg: str, new_pkg: str):
         self.filename  = filename
@@ -282,7 +282,7 @@ class FileConflictError(SvenError):
             f"cannot be overwritten by '{new_pkg}'"
         )
 
-class SystemdDependencyError(SvenError):
+class SystemdDependencyError(FinError):
     """Package requires systemd components unavailable on this init system."""
     def __init__(self, pkg: str, systemd_deps: list):
         self.pkg          = pkg
@@ -293,7 +293,7 @@ class SystemdDependencyError(SvenError):
             f"Selachii uses SysVinit — install from source or find an alternative."
         )
 
-class ABIIncompatibleError(SvenError):
+class ABIIncompatibleError(FinError):
     """Binary package requires a newer glibc than the host provides."""
     def __init__(self, pkg: str, required_glibc: str, host_glibc: str):
         self.pkg             = pkg
@@ -305,7 +305,7 @@ class ABIIncompatibleError(SvenError):
         )
 
 
-class ProtectedPackageError(SvenError):
+class ProtectedPackageError(FinError):
     """Attempted to manage a protected LFS package."""
     def __init__(self, pkg_name: str):
         self.pkg_name = pkg_name

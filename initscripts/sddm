@@ -2,7 +2,7 @@
 #
 # sddm - Simple Desktop Display Manager
 #
-# Seven OS init script shipped by Sven
+# Seven OS init script shipped by fin
 
 DAEMON="/usr/bin/sddm"
 PIDFILE="/run/sddm.pid"

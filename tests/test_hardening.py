@@ -1,5 +1,5 @@
 # ============================================================
-#  Sven — Selachii Package Manager
+#  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
 #  tests/test_hardening.py — tests for all 6 hardening fixes
 # ============================================================
@@ -34,7 +34,7 @@ class TestCompatABI(unittest.TestCase):
             _parse_version_tuple("2.17"),
         )
 
-    @patch("sven.resolver.compat.subprocess.run")
+    @patch("fin.resolver.compat.subprocess.run")
     def test_get_host_glibc_version(self, mock_run):
         """Should parse glibc version from ldd output."""
         from fin.resolver.compat import get_host_glibc_version, _host_glibc_version
@@ -50,7 +50,7 @@ class TestCompatABI(unittest.TestCase):
         self.assertEqual(ver, "2.38")
         compat_mod._host_glibc_version = None  # cleanup
 
-    @patch("sven.resolver.compat.subprocess.run")
+    @patch("fin.resolver.compat.subprocess.run")
     def test_extract_glibc_requirements(self, mock_run):
         """Should extract GLIBC version tags from readelf output."""
         from fin.resolver.compat import extract_glibc_requirements

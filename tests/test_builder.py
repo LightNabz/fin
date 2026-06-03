@@ -1,5 +1,5 @@
 # ============================================================
-#  Sven — Selachii Package Manager
+#  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
 #  tests/test_builder.py — tests for Phase 4 builder modules
 # ============================================================
@@ -338,7 +338,7 @@ class TestMakepkg(unittest.TestCase):
                 run_makepkg(tmpdir, "fake-pkg")
             self.assertIn("No PKGBUILD", str(ctx.exception))
 
-    @patch("sven.builder.makepkg._is_root", return_value=True)
+    @patch("fin.builder.makepkg._is_root", return_value=True)
     def test_root_detection(self, mock_root):
         """Should detect root and attempt privilege drop."""
         from fin.builder.makepkg import _is_root

@@ -11,7 +11,7 @@ import shutil
 from ..ui.output import print_section, print_success, print_error, print_info, print_warning
 from ..ui.prompt import confirm
 
-# Everything sven owns on the filesystem
+# Everything fin owns on the filesystem
 _SVEN_PATHS = [
     "/usr/bin/fin",
     "/etc/fin",

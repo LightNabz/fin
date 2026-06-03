@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/ui/prompt.py — User Interactions & Confirmation
+#  fin/ui/prompt.py — User Interactions & Confirmation
 # ============================================================
 
 import sys

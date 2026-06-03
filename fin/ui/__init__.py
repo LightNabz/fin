@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/ui/__init__.py
+#  fin/ui/__init__.py
 # ============================================================
 from .output import (
     print_banner, print_section, print_step, 

@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/security/patterns.py
+#  fin/security/patterns.py
 # ============================================================
 from typing import NamedTuple
 

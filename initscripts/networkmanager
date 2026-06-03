@@ -2,7 +2,7 @@
 #
 # networkmanager - NetworkManager daemon
 #
-# Seven OS init script shipped by Sven
+# Seven OS init script shipped by fin
 
 DAEMON="/usr/sbin/NetworkManager"
 PIDFILE="/run/NetworkManager/NetworkManager.pid"

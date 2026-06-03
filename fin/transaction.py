@@ -1,7 +1,7 @@
 # ============================================================
 #  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
-#  sven/transaction.py — The Action Orchestrator
+#  fin/transaction.py — The Action Orchestrator
 # ============================================================
 #
 #  Wires up all Phase 0-5 modules into a cohesive, atomic
@@ -15,7 +15,7 @@ from pathlib import Path
 from datetime import datetime
 
 from .config import get_config
-from .exceptions import SvenError, RollbackFailedError, ProtectedPackageError, ChecksumMismatchError
+from .exceptions import FinError, RollbackFailedError, ProtectedPackageError, ChecksumMismatchError
 
 from .db.models import Package
 from .db.local_db import LocalDB
@@ -474,7 +474,7 @@ class InstallTransaction(Transaction):
             abi_res = check_package_abi(archive)
             if not abi_res["compatible"]:
                 error_details = "\n".join(abi_res["details"])
-                raise SvenError(f"Package {pkg_name} is practically incompatible with host glibc:\n{error_details}")
+                raise FinError(f"Package {pkg_name} is practically incompatible with host glibc:\n{error_details}")
         if self.verbose:
             print_success("All library compatibility checks passed")
 

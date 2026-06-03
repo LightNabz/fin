@@ -5,7 +5,7 @@
 # ============================================================
 #
 #  Extracts .pkg.tar.zst locally. Respects installation root.
-#  Handles config file conflicts by using .svennew.
+#  Handles config file conflicts by using .finnew.
 # ============================================================
 
 import os
@@ -36,7 +36,7 @@ class Extractor:
         """
         Extract a .pkg.tar.zst archive to the root filesystem.
 
-        Handles .pacnew (mapped to .svennew) dynamically if backup_configs 
+        Handles .pacnew (mapped to .finnew) dynamically if backup_configs 
         are provided and the file is locally modified.
         
         Args:
@@ -73,14 +73,14 @@ class Extractor:
                             dest = self.root / member.name
                             dest_str = str(dest)
 
-                            # Handle config backups (.svennew)
-                            # Arch calls them .pacnew, we use .svennew
+                            # Handle config backups (.finnew)
+                            # Arch calls them .pacnew, we use .finnew
                             if member.name in backup_configs_set and dest.exists():
                                 # We simplify "is modified" by just checking if it exists
                                 # A true implementation would hash check against LocalDB
                                 print(f"   ⚠ Config conflict: {member.name}")
-                                print(f"     Installing as {member.name}.svennew")
-                                dest = Path(f"{dest_str}.svennew")
+                                print(f"     Installing as {member.name}.finnew")
+                                dest = Path(f"{dest_str}.finnew")
                                 dest_str = str(dest)
 
                             # Create directories

@@ -1,20 +1,20 @@
 # Maintainer: Selachii Project <open-source@hanstech.dev>
-pkgname=sven-bin
+pkgname=fin-bin
 pkgver=1.1.0
 pkgrel=1
-pkgdesc="Sven Package Manager for Selachii (LFS) - PyInstaller Binary"
+pkgdesc="fin Package Manager for Selachii (LFS) - PyInstaller Binary"
 arch=('x86_64')
 url="https://github.com/YOUR_USERNAME/fin"
 license=('GPL3')
 depends=('git' 'gnupg' 'curl' 'tar' 'zstd')
 provides=('fin')
-conflicts=('fin' 'sven-git')
-source=("sven-x86_64-linux::https://github.com/YOUR_USERNAME/fin/releases/download/v${pkgver}/sven-x86_64-linux")
+conflicts=('fin-git')
+source=("fin-x86_64-linux::https://github.com/YOUR_USERNAME/fin/releases/download/v${pkgver}/fin-x86_64-linux")
 sha256sums=('SKIP') # Use actual sha256 in production or use workflow to inline it
 
 package() {
     # Install binary
-    install -Dm755 "${srcdir}/sven-x86_64-linux" "${pkgdir}/usr/local/bin/sven"
+    install -Dm755 "${srcdir}/fin-x86_64-linux" "${pkgdir}/usr/local/bin/fin"
     
     # Create required directory structure
     install -dm755 "${pkgdir}/var/lib/fin/installed"

@@ -1,5 +1,5 @@
 # ============================================================
-#  Sven — Selachii Package Manager
+#  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
 #  tests/test_downloader.py — unit tests for Phase 3
 # ============================================================

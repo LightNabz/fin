@@ -1,5 +1,5 @@
 # ============================================================
-#  Sven — Selachii Package Manager
+#  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
 #  tests/test_resolver.py — unit tests for Phase 2 (unittest)
 # ============================================================

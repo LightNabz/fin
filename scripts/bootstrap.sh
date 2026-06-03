@@ -21,7 +21,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-info()  { echo -e "${CYAN}[sven]${NC} $1"; }
+info()  { echo -e "${CYAN}[fin]${NC} $1"; }
 ok()    { echo -e "${GREEN}[  ✓ ]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[ !! ]${NC} $1"; }
 fail()  { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
@@ -167,7 +167,7 @@ if [ ! -f "$MIRRORLIST" ]; then
 # fin Mirrorlist for Selachii
 # Lines starting with # are comments.
 # One mirror URL per line. Fastest mirrors first.
-# Run 'sven mirror fastest' to auto-detect.
+# Run 'fin mirror fastest' to auto-detect.
 https://mirror.rackspace.com/archlinux
 https://mirrors.kernel.org/archlinux
 https://ftp.halifax.rwth-aachen.de/archlinux
@@ -179,11 +179,11 @@ else
     ok "Mirrorlist already exists"
 fi
 
-# ── Step 8: Verify sven is importable ───────────────────────
-info "Verifying sven module..."
-SVEN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# ── Step 8: Verify fin is importable ────────────────────────────────────────────────
+info "Verifying fin module..."
+FIN_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-if PYTHONPATH="$SVEN_DIR" python3 -c "import fin; print(f'sven {sven.constants.VERSION}')" 2>/dev/null; then
+if PYTHONPATH="$FIN_DIR" python3 -c "import fin; print(f'fin {fin.constants.VERSION}')" 2>/dev/null; then
     ok "fin module verified"
 else
     warn "Could not import fin module. Check installation."
@@ -196,7 +196,7 @@ echo "  │          Bootstrap Complete!              │"
 echo "  ╰──────────────────────────────────────────╯"
 echo ""
 info "Next steps:"
-echo "    1. Run 'sven sync' to download package databases"
-echo "    2. Run 'sven mirror fastest' to find your fastest mirror"
-echo "    3. Run 'sven preflight' to verify your environment"
+echo "    1. Run 'fin sync' to download package databases"
+echo "    2. Run 'fin mirror fastest' to find your fastest mirror"
+echo "    3. Run 'fin preflight' to verify your environment"
 echo ""

@@ -40,7 +40,7 @@ def _pick_release_asset(assets: list[dict]) -> str | None:
 
 def source_tree_install_detected() -> bool:
     argv0 = Path(sys.argv[0]).name.lower()
-    if argv0 == "run_sven.py":
+    if argv0 == "run_fin.py":
         return True
     py_path = os.environ.get("PYTHONPATH", "")
     return "desktop/fin" in py_path.lower() or "/sources/fin" in py_path.lower()

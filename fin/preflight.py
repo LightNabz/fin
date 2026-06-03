@@ -4,7 +4,7 @@
 #  preflight.py — startup dependency and environment checks
 # ============================================================
 #
-#  Runs before any sven command to verify the environment.
+#  Runs before any fin command to verify the environment.
 #  Reports missing tools with clear instructions to fix.
 # ============================================================
 

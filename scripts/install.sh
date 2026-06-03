@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
 Usage: sudo bash install.sh [options]
 
   -v, --verbose        Trace every command, environment summary, and timings
-  --no-sync, --quick   Skip the final "sven sync" (faster; run sync when you want)
+  --no-sync, --quick   Skip the final "fin sync" (faster; run sync when you want)
   -h, --help           Show this help
 
 Examples:
@@ -43,7 +43,7 @@ DIM='\033[2m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-info()  { echo -e "${CYAN}[sven]${NC} $1"; }
+info()  { echo -e "${CYAN}[fin]${NC} $1"; }
 ok()    { echo -e "${GREEN}[  ✓ ]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[ !! ]${NC} $1"; }
 fail()  { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
@@ -80,7 +80,7 @@ fi
 if [ "$VERBOSE" -eq 0 ]; then
   echo ""
   echo -e "  ${BOLD}fin installer${NC} — Selachii package manager"
-  echo -e "  ${DIM}This script checks your tools, prepares system paths, installs the sven binary,${NC}"
+  echo -e "  ${DIM}This script checks your tools, prepares system paths, installs the fin binary,${NC}"
   echo -e "  ${DIM}runs adoption helpers if they are present, then optionally refreshes databases.${NC}"
   echo ""
 fi
@@ -136,28 +136,28 @@ vtime mkdir -p \
   /var/log/fin
 ok "Layout under /etc/fin, /var/lib/fin, /var/cache/fin is ready."
 
-step 3 "Installing the sven binary"
+step 3 "Installing the fin binary"
 CP_FLAGS=()
 [ "$VERBOSE" -eq 1 ] && CP_FLAGS=(-v)
 
-if [ -f "$REPO_ROOT/dist/sven" ]; then
-  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/dist/sven" /usr/bin/sven
-elif [ -f "$REPO_ROOT/sven" ]; then
-  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/sven" /usr/bin/sven
+if [ -f "$REPO_ROOT/dist/fin" ]; then
+  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/dist/fin" /usr/bin/fin
+elif [ -f "$REPO_ROOT/fin" ]; then
+  vtime cp "${CP_FLAGS[@]}" "$REPO_ROOT/fin" /usr/bin/fin
 else
   info "No local binary in dist/ — downloading latest release…"
-  LATEST_URL="https://github.com/YOUR_USERNAME/fin/releases/latest/download/sven-linux-x86_64"
+  LATEST_URL="https://github.com/YOUR_USERNAME/fin/releases/latest/download/fin-linux-x86_64"
   if command -v wget &>/dev/null; then
-    vtime wget -q --show-progress "$LATEST_URL" -O /usr/bin/sven
+    vtime wget -q --show-progress "$LATEST_URL" -O /usr/bin/fin
   elif command -v curl &>/dev/null; then
-    vtime curl -fL --progress-bar "$LATEST_URL" -o /usr/bin/sven
+    vtime curl -fL --progress-bar "$LATEST_URL" -o /usr/bin/fin
   else
     fail "Need wget or curl to download the binary."
   fi
 fi
 
-chmod +x /usr/bin/sven
-ok "Installed → /usr/bin/sven"
+chmod +x /usr/bin/fin
+ok "Installed → /usr/bin/fin"
 
 step 4 "Selachii adoption (optional)"
 if [ -f "$ADOPT_DIR/adopt_lfs.py" ]; then
@@ -176,15 +176,15 @@ fi
 
 step 5 "Finishing up"
 if [ "$NO_SYNC" -eq 1 ]; then
-  info "Skipping database sync (--no-sync). Run ${BOLD}sven sync${NC} when you are online."
+  info "Skipping database sync (--no-sync). Run ${BOLD}fin sync${NC} when you are online."
 else
-  info "Refreshing package databases (sven sync)…"
-  vtime sven sync || warn "Sync failed — check the network and run: sven sync"
+  info "Refreshing package databases (fin sync)…"
+  vtime fin sync || warn "Sync failed — check the network and run: fin sync"
 fi
 
 echo ""
 ok "fin is installed."
 if [ "$VERBOSE" -eq 0 ]; then
-  echo -e "  ${DIM}Try:${NC} ${BOLD}sven search vim${NC}  ${DIM}·${NC}  ${BOLD}sven list --explicit${NC}  ${DIM}·${NC}  ${BOLD}sven path <pkg>${NC}"
+  echo -e "  ${DIM}Try:${NC} ${BOLD}fin search vim${NC}  ${DIM}·${NC}  ${BOLD}fin list --explicit${NC}  ${DIM}·${NC}  ${BOLD}fin path <pkg>${NC}"
   echo ""
 fi

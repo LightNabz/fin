@@ -1,5 +1,5 @@
 # ============================================================
-#  Sven — Selachii Package Manager
+#  fin — Selachii Package Manager
 #  Selachii Project © 2026 — GPL v3
 #  tests/test_transaction.py — tests for Phase 6
 # ============================================================
@@ -13,19 +13,19 @@ from fin.transaction import Transaction, InstallTransaction, RemoveTransaction
 class TestTransaction(unittest.TestCase):
 
     def setUp(self):
-        self.cfg_patch = patch("sven.transaction.get_config")
+        self.cfg_patch = patch("fin.transaction.get_config")
         self.mock_cfg_func = self.cfg_patch.start()
         self.mock_config = MagicMock()
         self.mock_config.rooted.side_effect = lambda p: f"/tmp/fin_test{p}"
         self.mock_cfg_func.return_value = self.mock_config
         
-        self.db_patch = patch("sven.transaction.LocalDB")
+        self.db_patch = patch("fin.transaction.LocalDB")
         self.mock_db_class = self.db_patch.start()
         self.mock_db = MagicMock()
         self.mock_db.acquire_lock.return_value = True
         self.mock_db_class.return_value = self.mock_db
         
-        self.rb_patch = patch("sven.transaction.RollbackManager")
+        self.rb_patch = patch("fin.transaction.RollbackManager")
         self.mock_rollback_class = self.rb_patch.start()
         self.mock_rollback = MagicMock()
         self.mock_rollback.create_snapshot.return_value = "snap-123"
