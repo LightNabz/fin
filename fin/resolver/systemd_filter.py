@@ -4,27 +4,17 @@
 #  resolver/systemd_filter.py — systemd dependency filtering
 # ============================================================
 #
-#  Selachii uses OpenRC. Many packages depend on systemd
-#  components. This module classifies those dependencies and
-#  blocks hard systemd requirements while allowing soft ones.
-#
-#  Unlike the upstream sven implementation, alternatives here
-#  are real packages that exist in Artix's official repos.
-#
-#  This is still a bit problematic, but don't touch it if it's working :v
-#
+#  On OpenRC/runit/s6 systems, hard systemd deps are replaced
+#  with real Artix repo alternatives and queued for installation.
+#  All alternatives here are verified packages in Artix repos.
 # ============================================================
 
 from typing import NamedTuple
 from pathlib import Path
 
-from ..db.models import Package
 from ..exceptions import SystemdDependencyError
 
-
-# ── Known systemd packages and libraries ─────────────────────
-
-# HARD deps: the package links against systemd or requires it to function
+# ── Hard deps: will prevent the package from functioning ─────
 SYSTEMD_HARD_DEPS = frozenset({
     "systemd",
     "systemd-libs",
@@ -33,87 +23,78 @@ SYSTEMD_HARD_DEPS = frozenset({
     "systemd-ukify",
 })
 
-# SOFT deps: the package ships .service files or optional integration
-# These are safe to install — the unit files just won't be used
+# ── Soft deps: optional integration, safe to ignore ──────────
 SYSTEMD_SOFT_INDICATORS = frozenset({
     "systemd-service",
     "systemctl",
 })
 
-# Artix repo alternatives for systemd components.
-# All entries here are real packages available in Artix's official repos.
-# Verified against: world-openrc, world-runit, world-s6, system
+# ── Real Artix repo alternatives ─────────────────────────────
+# All verified against: world-openrc, world-runit, world-s6, system
+# These will be QUEUED FOR INSTALL, not just name-swapped.
 SYSTEMD_ALTERNATIVES = {
-    # libsystemd compatibility is provided by elogind on Artix
-    "systemd-libs":       "elogind",         # world-openrc / world-runit / world-s6
+    "systemd-libs":       "elogind",
     "libsystemd":         "elogind",
     "libsystemd.so":      "elogind",
     "libsystemd.so=0-64": "elogind",
-    # udev is provided by eudev on Artix (in the 'system' repo)
-    "libudev.so":         "eudev",            # system repo
-    "libudev.so=1-0":     "eudev",
-    "udev":               "eudev",
-    # login/session management
     "systemd-logind":     "elogind",
     "liblogind":          "elogind",
-    # no drop-in alternative for the full init
+    "libudev.so":         "eudev",
+    "libudev.so=1-0":     "eudev",
+    "udev":               "eudev",
+    # No alternative — block these entirely
     "systemd":            None,
     "systemd-sysvcompat": None,
 }
 
 
 class SystemdCheckResult(NamedTuple):
-    """Result of checking a package for systemd dependencies."""
-    safe: bool                    # True if package is safe to install
-    hard_deps: list[str]          # systemd deps that will prevent function
-    soft_deps: list[str]          # systemd deps that are optional/ignorable
-    alternatives: dict[str, str]  # Artix repo alternative for each hard dep
-    source_build_advised: bool    # should we build from source instead?
+    safe:                  bool
+    hard_deps:             list[str]
+    soft_deps:             list[str]
+    alternatives:          dict[str, str]   # dep → Artix package to install
+    missing_alternatives:  list[str]        # hard deps with no known alternative
+    source_build_advised:  bool
 
 
-def check_systemd_deps(pkg: Package, init_system: str = "openrc") -> SystemdCheckResult:
+def check_systemd_deps(pkg_name: str, deps: list[str], init_system: str = "openrc") -> SystemdCheckResult:
     """
-    Check if a package has dependencies on systemd components.
+    Classify a package's dependencies for systemd contamination.
 
-    On OpenRC/runit/s6 systems, hard systemd deps mean the package
-    won't function correctly. Soft deps (like .service files) are fine.
-
-    Args:
-        pkg: The package to check
-        init_system: Current init system (openrc, runit, s6, sysvinit, systemd)
-
-    Returns:
-        SystemdCheckResult with classification
+    Returns a result indicating which deps are hard/soft,
+    what Artix alternatives exist, and whether the package is safe to install.
     """
     normalized_init = (init_system or "").strip().lower()
 
-    runtime_systemd = Path("/run/systemd/private").exists()
-
-    # If we're on systemd (configured or detected), everything is fine
-    if runtime_systemd or normalized_init == "systemd" or normalized_init.startswith("systemd-"):
+    # On actual systemd or in a detected systemd runtime — no filtering needed
+    if Path("/run/systemd/private").exists() or normalized_init == "systemd":
         return SystemdCheckResult(
             safe=True, hard_deps=[], soft_deps=[],
-            alternatives={}, source_build_advised=False,
+            alternatives={}, missing_alternatives=[],
+            source_build_advised=False,
         )
 
-    all_deps = pkg.deps
-    hard_deps = []
-    soft_deps = []
-    alternatives = {}
+    hard_deps            = []
+    soft_deps            = []
+    alternatives         = {}
+    missing_alternatives = []
 
-    for dep in all_deps:
-        # Strip version constraints
-        dep_name = dep.split(">=")[0].split("<=")[0].split(">")[0].split("<")[0].split("=")[0].strip()
+    for dep in deps:
+        # Strip version constraints: libfoo.so>=1 → libfoo.so
+        dep_name = dep.split(">=")[0].split("<=")[0]\
+                      .split(">")[0].split("<")[0]\
+                      .split("=")[0].strip()
 
         if dep_name in SYSTEMD_HARD_DEPS:
-            # pacman declares "systemd" for sysusers hook but works fine without it
-            if pkg.name == "pacman" and dep_name == "systemd":
+            # Special case: pacman lists systemd for sysusers but works without it
+            if pkg_name == "pacman" and dep_name == "systemd":
                 continue
-
             hard_deps.append(dep_name)
             alt = SYSTEMD_ALTERNATIVES.get(dep_name)
             if alt:
                 alternatives[dep_name] = alt
+            else:
+                missing_alternatives.append(dep_name)
 
         elif dep_name in SYSTEMD_SOFT_INDICATORS:
             soft_deps.append(dep_name)
@@ -123,50 +104,101 @@ def check_systemd_deps(pkg: Package, init_system: str = "openrc") -> SystemdChec
             alt = SYSTEMD_ALTERNATIVES.get(dep_name)
             if alt:
                 alternatives[dep_name] = alt
+            else:
+                missing_alternatives.append(dep_name)
 
     safe = len(hard_deps) == 0
-    source_advised = len(hard_deps) > 0 and len(alternatives) < len(hard_deps)
+    source_advised = len(missing_alternatives) > 0
 
     return SystemdCheckResult(
         safe=safe,
         hard_deps=hard_deps,
         soft_deps=soft_deps,
         alternatives=alternatives,
+        missing_alternatives=missing_alternatives,
         source_build_advised=source_advised,
     )
 
 
-def filter_systemd_packages(
-    packages: list[Package],
+def resolve_systemd_deps(
+    pkg_name:   str,
+    deps:       list[str],
     init_system: str = "openrc",
-    strict: bool = True,
-) -> tuple[list[Package], list[dict]]:
+    strict:     bool = True,
+) -> tuple[list[str], list[str]]:
     """
-    Filter a list of packages, removing those with hard systemd deps.
+    Resolve systemd dependencies for a package.
+
+    Replaces hard systemd deps with their Artix alternatives in the dep list,
+    and returns the list of alternative packages that need to be installed.
 
     Args:
-        packages: List of packages to filter
+        pkg_name:    Name of the package being resolved
+        deps:        Full dependency list from the package DB
         init_system: Current init system
-        strict: If True, raise SystemdDependencyError on hard deps.
-                If False, just warn and exclude.
+        strict:      If True, raise on hard deps with no alternative
 
     Returns:
-        (safe_packages, warnings)
+        (clean_deps, to_install)
+        - clean_deps:  dep list with systemd entries replaced/removed
+        - to_install:  list of Artix alternative packages to queue for install
     """
-    safe = []
+    result   = check_systemd_deps(pkg_name, deps, init_system)
+    to_install: list[str] = []
+    clean_deps: list[str] = []
+
+    for dep in deps:
+        dep_name = dep.split(">=")[0].split("<=")[0]\
+                      .split(">")[0].split("<")[0]\
+                      .split("=")[0].strip()
+
+        if dep_name in result.alternatives:
+            alt = result.alternatives[dep_name]
+            # Queue the alternative for installation
+            if alt not in to_install:
+                to_install.append(alt)
+                print(f"   [systemd-filter] {dep_name} → {alt} (Artix repo)")
+            # Don't add the original systemd dep to clean_deps
+            continue
+
+        if dep_name in result.missing_alternatives:
+            if strict:
+                raise SystemdDependencyError(pkg_name, [dep_name])
+            print(f"   ⚠ [systemd-filter] {dep_name} has no alternative — skipping")
+            continue
+
+        if dep_name in SYSTEMD_SOFT_INDICATORS:
+            # Soft dep — skip silently
+            continue
+
+        clean_deps.append(dep)
+
+    return clean_deps, to_install
+
+
+def filter_systemd_packages(
+    packages:    list,
+    init_system: str  = "openrc",
+    strict:      bool = True,
+) -> tuple[list, list[dict]]:
+    """
+    Filter a list of Package objects, blocking hard systemd deps.
+    Returns (safe_packages, warnings).
+    """
+    safe     = []
     warnings = []
 
     for pkg in packages:
-        result = check_systemd_deps(pkg, init_system)
+        result = check_systemd_deps(pkg.name, pkg.deps, init_system)
 
         if result.safe:
             safe.append(pkg)
             if result.soft_deps:
                 warnings.append({
                     "package": pkg.name,
-                    "level": "info",
+                    "level":   "info",
                     "message": f"Has optional systemd integration "
-                               f"({', '.join(result.soft_deps)}) — safe to ignore on OpenRC",
+                               f"({', '.join(result.soft_deps)}) — safe on OpenRC",
                 })
         else:
             if strict:
@@ -174,14 +206,14 @@ def filter_systemd_packages(
 
             alt_msg = ""
             if result.alternatives:
-                alts = [f"{k} → {v} (Artix repo)" for k, v in result.alternatives.items()]
+                alts    = [f"{k} → {v}" for k, v in result.alternatives.items()]
                 alt_msg = f". Artix alternatives: {', '.join(alts)}"
 
             warnings.append({
-                "package": pkg.name,
-                "level": "blocked",
-                "message": f"Requires systemd: {', '.join(result.hard_deps)}"
-                           f"{alt_msg}",
+                "package":      pkg.name,
+                "level":        "blocked",
+                "message":      f"Requires systemd: {', '.join(result.hard_deps)}{alt_msg}",
+                "to_install":   list(result.alternatives.values()),
                 "source_build": result.source_build_advised,
             })
 

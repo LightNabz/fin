@@ -19,6 +19,7 @@ except ImportError:
 
 from ..config import get_config
 from ..exceptions import ExtractionError
+from .lib_checker import LibChecker
 
 # Files to skip expanding onto the filesystem
 METADATA_FILES = {".PKGINFO", ".MTREE", ".INSTALL", ".BUILDINFO"}
@@ -120,5 +121,10 @@ class Extractor:
             raise ExtractionError(archive_path, f"Decompression failed: {e}")
         except OSError as e:
             raise ExtractionError(archive_path, f"OS error during extraction: {e}")
+
+        # Create any missing public .so symlinks for libs installed
+        # into non-standard subdirectories (e.g. /usr/lib/elogind/)
+        checker = LibChecker()
+        checker.create_missing_symlinks(extracted_files)
 
         return extracted_files
